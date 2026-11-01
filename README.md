@@ -38,3 +38,12 @@ The price feed is provided by CoinMarketCap through a compatible relay. The widg
 ## Project rights
 
 No license has been chosen for this repository. You may view the source on GitHub, but reuse and redistribution rights have not been granted.
+
+
+## Download a Windows app
+
+The **Build Windows app** workflow creates a Windows executable. In the repository, open **Actions**, choose **Build Windows app**, then select **Run workflow**. Enter the HTTPS URL of your Cloudflare price relay. When the run finishes, download the **Bitcoin-Ticker-Windows** artifact, extract the ZIP, and open **Bitcoin Ticker.exe**.
+
+The build includes the relay URL as app configuration. Your CoinMarketCap API key stays on the relay server and is not included. The Windows executable is unsigned, so Windows may show its standard first-run warning. GitHub keeps this build download for 30 days.
+
+The widget still needs a working HTTPS relay URL to show live prices. Local settings remain on your PC under %APPDATA% and are not included in the download.
