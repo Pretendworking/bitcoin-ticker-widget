@@ -1,0 +1,64 @@
+name: Build Windows app
+
+on:
+  workflow_dispatch:
+    inputs:
+      price_url:
+        description: HTTPS URL of your Bitcoin price relay (for example, your Cloudflare Worker endpoint)
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+
+      - name: Install app and packager
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt pyinstaller
+
+      - name: Configure relay and build executable
+        env:
+          PRICE_URL: ${{ inputs.price_url }}
+        shell: pwsh
+        run: |
+          if ($env:PRICE_URL -notmatch '^https://') {
+            throw "The price relay URL must start with https://"
+          }
+          @{ price_url = $env:PRICE_URL } |
+            ConvertTo-Json |
+            Set-Content -Path btc_ticker_config.json -Encoding utf8
+
+          pyinstaller --noconfirm --clean --onefile --windowed `
+            --name "Bitcoin Ticker" `
+            --icon "Bitcoin Ticker.ico" `
+            --add-data "bitcoin_ticker_icon.png;." `
+            --add-data "btc_ticker_config.json;." `
+            main.py
+
+      - name: Package download
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path package | Out-Null
+          Copy-Item "dist\Bitcoin Ticker.exe" package
+          Copy-Item README.md package
+          Compress-Archive -Path "package\*" -DestinationPath "Bitcoin-Ticker-Windows.zip" -Force
+
+      - name: Upload Windows download
+        uses: actions/upload-artifact@v7
+        with:
+          name: Bitcoin-Ticker-Windows
+          path: Bitcoin-Ticker-Windows.zip
+          if-no-files-found: error
+          retention-days: 30
